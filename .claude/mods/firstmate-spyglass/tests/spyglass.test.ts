@@ -1,0 +1,276 @@
+// firstmate-spyglass under `claude plugin test`: the exact opt-in, silence outside a
+// Firstmate home, the fleet refresh and its status line, the /fleet pane, the worker
+// session pane, the update flag, and the read-only boundary.
+import { describe, expect, test, type Engine } from "claude-code/testing";
+import {
+  BUSY_SNAPSHOT,
+  CODE,
+  HEAD,
+  HOME,
+  isStock,
+  pane,
+  PEEK,
+  REMOTE,
+  SNAPSHOT,
+  start,
+  shownText,
+  world,
+} from "./support.ts";
+
+const ORIGIN = "https://github.com/kunchenguid/firstmate.git";
+
+describe("activation", () => {
+  async function expectInert($: Engine, on: Parameters<typeof world>[0], functionHooks: string | undefined) {
+    const { clock, journal } = world(on, { functionHooks, snapshot: BUSY_SNAPSHOT, origin: ORIGIN });
+    await start($);
+    expect(isStock(await $.ui.render(pane()))).toBe(true);
+    expect(isStock(await $.ui.render(pane("spyglass-session")))).toBe(true);
+    await clock.advance(11 * 60_000);
+    expect(journal.runs).toHaveLength(0);
+    expect(journal.commands).toHaveLength(0);
+    expect(journal.opened).toHaveLength(0);
+    expect(journal.toasts).toHaveLength(0);
+    expect(journal.statuses).toHaveLength(0);
+    expect(journal.fsReads).toHaveLength(0);
+  }
+
+  test("is fully inert when the function-hooks opt-in is absent", async ($, on) => {
+    await expectInert($, on, undefined);
+  });
+
+  test("is fully inert when the function-hooks opt-in is not exactly one", async ($, on) => {
+    await expectInert($, on, "true");
+  });
+
+  test("stays silent outside a Firstmate home", async ($, on) => {
+    const { clock, journal } = world(on, { firstmate: false });
+    await start($);
+    expect(isStock(await $.ui.render(pane()))).toBe(true);
+    await clock.advance(11 * 60_000);
+    expect(journal.runs).toHaveLength(0);
+    expect(journal.commands).toHaveLength(0);
+    expect(journal.opened).toHaveLength(0);
+    expect(journal.statuses).toHaveLength(0);
+  });
+});
+
+describe("the fleet", () => {
+  test("reads the snapshot from the code root for the resolved home and summarizes it in the status line", async ($, on) => {
+    const { files, journal } = world(on, { snapshot: BUSY_SNAPSHOT });
+    files.set(`${HOME}/state/alpha.meta`, "harness=claude\nmodel=opus\neffort=high\n");
+    await start($);
+    expect(journal.commands).toEqual(["fleet"]);
+    expect(journal.opened).toEqual(["spyglass"]);
+    const snapshot = journal.runs.find((run) => run.argv[0] === SNAPSHOT);
+    expect(snapshot?.argv).toEqual([SNAPSHOT, "--json"]);
+    expect(snapshot?.cwd).toBe(CODE);
+    expect(snapshot?.env).toEqual({ FM_HOME: HOME });
+    expect(journal.statuses.at(-1)).toBe("⚓ 1 under way · 1 signal · 1 PR ready");
+    expect(journal.fsReads).toContain(`${HOME}/state/alpha.meta`);
+  });
+
+  test("draws the banner, signals, workers with model and effort, and queued work", async ($, on) => {
+    const { files } = world(on, { snapshot: BUSY_SNAPSHOT });
+    files.set(`${HOME}/state/alpha.meta`, "model=opus\neffort=high\n");
+    await start($);
+    const text = shownText(await $.ui.render(pane()));
+    for (const expected of [
+      "S P Y G L A S S",
+      "Signals for the Captain",
+      "PR ready · alpha",
+      "https://github.com/o/r/pull/7",
+      "Pick a name",
+      "needs the captain",
+      "Under Way",
+      "alpha",
+      "ship · web",
+      "opus · high effort",
+      "View session",
+      "At Anchor",
+      "Later work",
+    ]) expect(text).toContain(expected);
+  });
+
+  test("toasts only for a signal that appears after the first read", async ($, on) => {
+    const { clock, journal, reply } = world(on, { snapshot: BUSY_SNAPSHOT });
+    await start($);
+    expect(journal.toasts.filter((toast) => toast.includes("signal"))).toHaveLength(0);
+    reply([SNAPSHOT], {
+      stdout: JSON.stringify({
+        ...BUSY_SNAPSHOT,
+        backlog: { records: [...BUSY_SNAPSHOT.backlog.records, { id: "fresh", title: "New call", captain_actionable: true }] },
+      }),
+    });
+    await clock.advance(15_000);
+    expect(journal.toasts).toContain("🚩 1 new signal for the captain - /fleet");
+  });
+
+  test("reports an unreadable fleet instead of going silent", async ($, on) => {
+    const { journal, reply } = world(on);
+    reply([SNAPSHOT], { exitCode: 2, stderr: "boom\n" });
+    await start($);
+    expect(journal.statuses.at(-1)).toBe("⚓ fleet unreadable");
+    expect(shownText(await $.ui.render(pane()))).toContain("Fleet unreadable: boom");
+  });
+});
+
+describe("the worker session pane", () => {
+  test("shows a sanitized live tail from fm-peek", async ($, on) => {
+    const { journal, reply } = world(on, { snapshot: BUSY_SNAPSHOT });
+    reply([PEEK], { stdout: "\u001b[32mgreen\u001b[0m line\r\nnext\n" });
+    await start($);
+    const ui = await $.ui.mount({ plugin: "spyglass", ...pane() });
+    await ui.press({ key: "view:alpha" });
+    expect(journal.opened).toContain("spyglass-session");
+    const peek = journal.runs.find((run) => run.argv[0] === PEEK);
+    expect(peek?.argv).toEqual([PEEK, "alpha", "80"]);
+    expect(peek?.env).toEqual({ FM_HOME: HOME });
+    const text = shownText(await $.ui.render(pane("spyglass-session")));
+    expect(text).toContain("alpha");
+    expect(text).toContain("green line\nnext");
+    expect(text).not.toContain("\u001b");
+    expect(text).toContain("Open in terminal");
+    expect(text).toContain("Copy attach command");
+  });
+
+  test("copies the attach command for the worker's tmux target", async ($, on) => {
+    const { journal } = world(on, { snapshot: BUSY_SNAPSHOT });
+    await start($);
+    const main = await $.ui.mount({ plugin: "spyglass", ...pane() });
+    await main.press({ key: "view:alpha" });
+    const side = await $.ui.mount({ plugin: "spyglass", ...pane("spyglass-session") });
+    await side.press({ key: "copy" });
+    expect(journal.copies).toEqual(["tmux attach -t fm:alpha"]);
+  });
+});
+
+describe("the update flag", () => {
+  const behind = { head: HEAD, remote: REMOTE, origin: ORIGIN, compare: { n: 3, files: ["AGENTS.md", "bin/fm-spawn.sh"] } };
+
+  test("is absent while origin's main is not ahead, leaving a Check for updates control", async ($, on) => {
+    const { journal } = world(on, { snapshot: BUSY_SNAPSHOT, origin: ORIGIN, head: HEAD, remote: HEAD });
+    await start($);
+    const text = shownText(await $.ui.render(pane()));
+    expect(text).not.toContain("Firstmate update available");
+    expect(text).toContain("Firstmate up to date");
+    expect(text).toContain("Check for updates");
+    expect(journal.runs.some((run) => run.argv[0] === "gh")).toBe(false);
+    expect(journal.statuses.at(-1)).not.toContain("update");
+  });
+
+  test("shows the commit count and the local edit the update would collide with", async ($, on) => {
+    const { clock, journal } = world(on, { snapshot: BUSY_SNAPSHOT, ...behind, porcelain: " M AGENTS.md\n M README.md\n" });
+    await start($);
+    const text = shownText(await $.ui.render(pane()));
+    expect(text).toContain("Firstmate update available - 3 commits behind");
+    expect(text).toContain("Your local change to AGENTS.md is in the way: the update changes it too.");
+    expect(text).toContain("Update Firstmate");
+    // The status line picks the flag up at the next fleet refresh.
+    await clock.advance(15_000);
+    expect(journal.statuses.at(-1)).toBe("⚓ 1 under way · 1 signal · 1 PR ready · ⬆ update");
+    const compare = journal.runs.find((run) => run.argv[0] === "gh");
+    expect(compare?.argv.slice(0, 3)).toEqual(["gh", "api", `repos/kunchenguid/firstmate/compare/${HEAD}...${REMOTE}`]);
+  });
+
+  test("derives the upstream from origin, so a fork compares against itself", async ($, on) => {
+    const { journal } = world(on, { snapshot: BUSY_SNAPSHOT, ...behind, origin: "git@github.com:someone/firstmate.git" });
+    await start($);
+    expect(journal.runs.find((run) => run.argv[0] === "gh")?.argv[2]).toBe(`repos/someone/firstmate/compare/${HEAD}...${REMOTE}`);
+  });
+
+  test("notes an untouched local edit without calling it a conflict", async ($, on) => {
+    world(on, { snapshot: BUSY_SNAPSHOT, ...behind, porcelain: " M README.md\n" });
+    await start($);
+    const text = shownText(await $.ui.render(pane()));
+    expect(text).toContain("Your local change to README.md is not touched by this update.");
+    expect(text).not.toContain("is in the way");
+  });
+
+  test("submits the captain's own words when Update Firstmate is pressed, and shows it queued then updating", async ($, on) => {
+    const { journal } = world(on, { snapshot: BUSY_SNAPSHOT, ...behind });
+    await start($);
+    const ui = await $.ui.mount({ plugin: "spyglass", ...pane() });
+    await ui.press({ key: "update" });
+    expect(journal.prompts).toEqual([{ text: "update firstmate", asUser: true }]);
+    expect(journal.toasts).toContain("⬆ Update queued - the first mate runs it as soon as it is free");
+    expect(shownText(await $.ui.render(pane()))).toContain("Updating Firstmate...");
+  });
+
+  test("clears the flag and reports done once local main reaches the commit it was behind", async ($, on) => {
+    const { clock, journal, reply } = world(on, { snapshot: BUSY_SNAPSHOT, ...behind });
+    await start($);
+    const ui = await $.ui.mount({ plugin: "spyglass", ...pane() });
+    await ui.press({ key: "update" });
+    reply(["git", "-C", CODE, "rev-parse", "HEAD"], { stdout: `${REMOTE}\n` });
+    await clock.advance(15_000);
+    expect(journal.toasts).toContain("✓ Firstmate updated to the latest");
+    const text = shownText(await $.ui.render(pane()));
+    expect(text).toContain("✓ Firstmate updated to the latest");
+    expect(text).not.toContain("Firstmate update available");
+  });
+
+  test("skips the flag and the control when origin is not a GitHub remote", async ($, on) => {
+    const { journal } = world(on, { snapshot: BUSY_SNAPSHOT, ...behind, origin: "https://gitlab.com/o/r.git" });
+    await start($);
+    const text = shownText(await $.ui.render(pane()));
+    expect(text).not.toContain("update");
+    expect(text).not.toContain("Check for updates");
+    expect(journal.runs.some((run) => run.argv[0] === "gh")).toBe(false);
+    expect(journal.statuses.at(-1)).toBe("⚓ 1 under way · 1 signal · 1 PR ready");
+  });
+
+  test("skips the flag and the control when gh is unavailable", async ($, on) => {
+    const { journal } = world(on, { snapshot: BUSY_SNAPSHOT, ...behind, gh: false });
+    await start($);
+    const text = shownText(await $.ui.render(pane()));
+    expect(text).not.toContain("update");
+    expect(text).not.toContain("Check for updates");
+    expect(journal.runs.some((run) => run.argv[0] === "gh")).toBe(false);
+  });
+});
+
+describe("the read-only boundary", () => {
+  test("runs only read-only commands: the snapshot, a peek, git reads, the compare, and a terminal launcher", async ($, on) => {
+    const { clock, journal } = world(on, {
+      snapshot: BUSY_SNAPSHOT,
+      origin: ORIGIN,
+      head: HEAD,
+      remote: REMOTE,
+      compare: { n: 1, files: [] },
+    });
+    await start($);
+    const ui = await $.ui.mount({ plugin: "spyglass", ...pane() });
+    await ui.press({ key: "view:alpha" });
+    const side = await $.ui.mount({ plugin: "spyglass", ...pane("spyglass-session") });
+    await side.press({ key: "terminal" });
+    await clock.advance(11 * 60_000);
+    const allowed = (argv: readonly string[]) =>
+      argv[0] === SNAPSHOT ||
+      argv[0] === PEEK ||
+      (argv[0] === "git" && argv[1] === "-C" && ["remote", "rev-parse", "ls-remote", "status"].includes(argv[3] ?? "")) ||
+      (argv[0] === "gh" && argv[1] === "api") ||
+      (argv[0] === "/bin/sh" && /^command -v (gh|tmux)$/.test(argv[argv.length - 1] ?? "")) ||
+      argv[0] === "open" ||
+      argv[0] === "osascript";
+    for (const run of journal.runs) expect(allowed(run.argv)).toBe(true);
+    expect(journal.runs.some((run) => run.argv[0] === "open" || run.argv[0] === "osascript")).toBe(true);
+    // Nothing the mod runs is a mutating fm-* script, and nothing is sent to a worker.
+    for (const run of journal.runs) {
+      if (run.argv[0]?.startsWith(`${CODE}/bin/`)) expect([SNAPSHOT, PEEK]).toContain(run.argv[0]);
+    }
+    expect(journal.prompts).toHaveLength(0);
+  });
+
+  test("refuses to hand an unexpected tmux target to a terminal launcher", async ($, on) => {
+    const { journal } = world(on, {
+      snapshot: { ...BUSY_SNAPSHOT, tasks: [{ ...BUSY_SNAPSHOT.tasks[0], endpoint: { target: 'x" & do shell script "id' } }] },
+    });
+    await start($);
+    const ui = await $.ui.mount({ plugin: "spyglass", ...pane() });
+    await ui.press({ key: "view:alpha" });
+    const side = await $.ui.mount({ plugin: "spyglass", ...pane("spyglass-session") });
+    await side.press({ key: "terminal" });
+    expect(journal.runs.some((run) => run.argv[0] === "open" || run.argv[0] === "osascript")).toBe(false);
+    expect(journal.toasts.some((toast) => toast.startsWith("Could not open a terminal: unexpected session name"))).toBe(true);
+  });
+});
