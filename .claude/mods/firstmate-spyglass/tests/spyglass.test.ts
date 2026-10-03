@@ -142,10 +142,10 @@ describe("the worker session pane", () => {
     const ui = await $.ui.mount({ plugin: "spyglass", ...pane() });
     await ui.press({ key: "view:alpha" });
     expect(journal.runs.find((run) => run.argv[0] === PEEK)?.argv).toEqual([PEEK, "alpha", "80"]);
-    const tall = shownText(await $.ui.render(pane("spyglass-session", 80, 30)));
-    expect(tall).toContain("step 65\n");
+    const tall = shownText(await $.ui.render(pane("spyglass-session", 80, 40)));
+    expect(tall).toContain("step 61\n");
     expect(tall).toContain("step 80");
-    expect(tall).not.toContain("step 64\n");
+    expect(tall).not.toContain("step 60\n");
     const short = shownText(await $.ui.render(pane("spyglass-session", 80, 10)));
     expect(short).toContain("step 73\n");
     expect(short).not.toContain("step 72\n");

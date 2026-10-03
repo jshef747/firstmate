@@ -514,8 +514,9 @@ export const register: Register = (on) => {
     if (!cur) return <Text color={NAVY.mist}>Pick a worker in Spyglass to watch its session.</Text>;
 
     const attach = cur.target ? `tmux attach -t ${cur.target}` : null;
-    // Only the newest lines that fit under the header and buttons, so the live end of the tail is on screen.
-    const tail = cur.text.split("\n").slice(-Math.max(8, (e.viewport?.rows ?? 40) - 14)).join("\n");
+    // Only the newest lines that fit, so the live end of the tail is on screen. viewport.rows is the whole
+    // terminal, so reserve room for the header, buttons, and border plus Claude Code's prompt and status rows.
+    const tail = cur.text.split("\n").slice(-Math.max(8, (e.viewport?.rows ?? 40) - 20)).join("\n");
 
     return (
       <Box flexDirection="column">
