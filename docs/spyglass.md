@@ -60,6 +60,7 @@ The pane writes only when the fleet actually changed, because every write redraw
 ### Worker session pane
 
 View session opens a second pane with the live tail of that worker's terminal, checked every 3 seconds.
+The pane shows only the newest lines of the 80-line capture that fit the terminal, so the live end stays on screen.
 Its buttons:
 
 - Refresh captures the tail now.
