@@ -115,8 +115,9 @@ check(lib.summary(empty, null) === undefined, "an empty fleet produced a status 
 const snapshot = {
   generated: "2026-10-03T10:15:00Z",
   tasks: [
-    { id: "alpha", kind: "ship", current_state: { state: "working" }, backlog: { repo: "web" }, project: "ignored", pr: { url: "https://github.com/o/r/pull/7" }, backend: "tmux", remote: null, endpoint: { target: "fm:alpha" } },
+    { id: "alpha", kind: "ship", current_state: { state: "done" }, backlog: { repo: "web" }, project: "ignored", pr: { url: "https://github.com/o/r/pull/7" }, backend: "tmux", remote: null, endpoint: { target: "fm:alpha" } },
     { id: "beta", current_state: {}, project: "api" },
+    { id: "draft", current_state: { state: "working" }, pr: { url: "https://github.com/o/r/pull/8" } },
     { id: "gamma" },
     { id: "delta", backend: "herdr", remote: null, endpoint: { target: "herdr-pane-7" } },
     { id: "epsilon", backend: "tmux", remote: { host: "box", root: "/fm" }, endpoint: { target: "fm:epsilon" } },
@@ -133,8 +134,9 @@ const snapshot = {
 };
 const fleet = lib.trimSnapshot(snapshot);
 same(fleet.underWay, [
-  { id: "alpha", kind: "ship", state: "working", project: "web", pr: "https://github.com/o/r/pull/7", target: "fm:alpha", model: null, effort: null },
+  { id: "alpha", kind: "ship", state: "done", project: "web", pr: "https://github.com/o/r/pull/7", target: "fm:alpha", model: null, effort: null },
   { id: "beta", kind: "-", state: "?", project: "api", pr: null, target: null, model: null, effort: null },
+  { id: "draft", kind: "-", state: "working", project: "-", pr: "https://github.com/o/r/pull/8", target: null, model: null, effort: null },
   { id: "gamma", kind: "-", state: "?", project: "-", pr: null, target: null, model: null, effort: null },
   { id: "delta", kind: "-", state: "?", project: "-", pr: null, target: null, model: null, effort: null },
   { id: "epsilon", kind: "-", state: "?", project: "-", pr: null, target: null, model: null, effort: null },
@@ -143,7 +145,7 @@ same(fleet.calls, [
   { id: "held", title: "Pick a name", reason: "needs the captain" },
   { id: "rawheld", title: "- raw line", reason: "" },
 ], "captain holds were trimmed differently");
-same(fleet.prs, [{ id: "alpha", url: "https://github.com/o/r/pull/7" }], "ready PRs were trimmed differently");
+same(fleet.prs, [{ id: "alpha", url: "https://github.com/o/r/pull/7" }], "ready PRs were trimmed differently (a PR is ready only once its worker reports done)");
 same(fleet.queued, [{ id: "wait", title: "Later work" }, { id: "wait2", title: "raw queued" }], "queued work was trimmed differently (a held record must not also queue)");
 check(fleet.generated === "2026-10-03T10:15:00Z", "the generated time was lost");
 same(lib.trimSnapshot({}), { generated: "", underWay: [], calls: [], prs: [], queued: [] }, "an empty object did not trim to an empty fleet");
@@ -154,8 +156,8 @@ same(lib.parseWorkerMeta("model=\nharness=pi\n"), { model: null, effort: null },
 
 // The status line.
 const behind = { remote: "r", behind: 2, local: [], conflicts: [], checkedAt: "10:00", error: null };
-check(lib.summary(fleet, null) === "⚓ 5 under way · 2 signals · 1 PR ready", \`summary was \${lib.summary(fleet, null)}\`);
-check(lib.summary(fleet, behind) === "⚓ 5 under way · 2 signals · 1 PR ready · ⬆ update", "the update flag is missing from the summary");
+check(lib.summary(fleet, null) === "⚓ 6 under way · 2 signals · 1 PR ready", \`summary was \${lib.summary(fleet, null)}\`);
+check(lib.summary(fleet, behind) === "⚓ 6 under way · 2 signals · 1 PR ready · ⬆ update", "the update flag is missing from the summary");
 check(lib.summary({ ...empty, underWay: [fleet.underWay[0]] }, null) === "⚓ 1 under way", "a single worker pluralized");
 check(lib.summary(empty, behind) === "⚓ ⬆ update", "an update alone did not read");
 check(lib.summary(empty, { ...behind, behind: 0 }) === undefined, "an up-to-date checkout added to the summary");
@@ -199,9 +201,10 @@ for (const url of ["", "https://gitlab.com/o/r.git", "git@gitlab.com:o/r.git", "
   check(lib.githubRepoFromRemote(url) === undefined, \`\${JSON.stringify(url)} named a repo\`);
 }
 
-// Locally edited tracked files, from git status --porcelain.
-same(lib.localEdits(" M bin/fm-spawn.sh\nM  AGENTS.md\nMM docs/x.md\n"), ["bin/fm-spawn.sh", "AGENTS.md", "docs/x.md"], "porcelain edits were read differently");
-same(lib.localEdits(""), [], "no status output read as edits");
+// Origin's default branch and its commit, from git ls-remote --symref origin HEAD.
+same(lib.originHead("ref: refs/heads/trunk\tHEAD\nabc123\tHEAD\n"), { branch: "trunk", commit: "abc123" }, "origin's default branch was read differently");
+check(lib.originHead("abc123\tHEAD\n") === undefined, "a missing symref named a branch");
+check(lib.originHead("") === undefined, "no ls-remote output named a branch");
 
 // Behind count and conflicts: only a local edit the incoming commits also change collides.
 const clean = lib.updateFrom("abc", [], { n: 3, files: ["AGENTS.md", "bin/fm-spawn.sh"] }, "10:00");

@@ -93,6 +93,27 @@ describe("the fleet", () => {
     ]) expect(text).toContain(expected);
   });
 
+  test("passes an overridden state directory on to the snapshot and fm-peek", async ($, on) => {
+    const { files, journal } = world(on, { snapshot: BUSY_SNAPSHOT, env: { FM_STATE_OVERRIDE: "/elsewhere/state" } });
+    files.set("/elsewhere/state/alpha.meta", "model=opus\neffort=high\n");
+    await start($);
+    expect(journal.runs.find((run) => run.argv[0] === SNAPSHOT)?.env).toEqual({ FM_HOME: HOME, FM_STATE_OVERRIDE: "/elsewhere/state" });
+    expect(shownText(await $.ui.render(pane()))).toContain("opus · high effort");
+    const ui = await $.ui.mount({ plugin: "spyglass", ...pane() });
+    await ui.press({ key: "view:alpha" });
+    expect(journal.runs.find((run) => run.argv[0] === PEEK)?.env).toEqual({ FM_HOME: HOME, FM_STATE_OVERRIDE: "/elsewhere/state" });
+  });
+
+  test("counts a PR as ready only once its worker reports done", async ($, on) => {
+    const { clock, journal, reply } = world(on, { snapshot: { ...BUSY_SNAPSHOT, tasks: [{ ...BUSY_SNAPSHOT.tasks[0], current_state: { state: "working" } }] } });
+    await start($);
+    expect(journal.statuses.at(-1)).toBe("⚓ 1 under way · 1 signal");
+    expect(shownText(await $.ui.render(pane()))).not.toContain("PR ready");
+    reply([SNAPSHOT], { stdout: JSON.stringify(BUSY_SNAPSHOT) });
+    await clock.advance(15_000);
+    expect(journal.toasts).toContain("🚩 1 new signal for the captain - /fleet");
+  });
+
   test("toasts only for a signal that appears after the first read", async ($, on) => {
     const { clock, journal, reply } = world(on, { snapshot: BUSY_SNAPSHOT });
     await start($);
@@ -236,14 +257,13 @@ describe("the update flag", () => {
   });
 
   test("shows the commit count and the local edit the update would collide with", async ($, on) => {
-    const { clock, journal } = world(on, { snapshot: BUSY_SNAPSHOT, ...behind, porcelain: " M AGENTS.md\n M README.md\n" });
+    const { journal } = world(on, { snapshot: BUSY_SNAPSHOT, ...behind, edits: ["AGENTS.md", "README.md"] });
     await start($);
     const text = shownText(await $.ui.render(pane()));
     expect(text).toContain("Firstmate update available - 3 commits behind");
     expect(text).toContain("Your local change to AGENTS.md is in the way: the update changes it too.");
     expect(text).toContain("Update Firstmate");
-    // The status line picks the flag up at the next fleet refresh.
-    await clock.advance(15_000);
+    // The status line picks the flag up as soon as the check finishes, not at the next fleet refresh.
     expect(journal.statuses.at(-1)).toBe("⚓ 1 under way · 1 signal · 1 PR ready · ⬆ update");
     const compare = journal.runs.find((run) => run.argv[0] === "gh");
     expect(compare?.argv.slice(0, 3)).toEqual(["gh", "api", `repos/kunchenguid/firstmate/compare/${HEAD}...${REMOTE}`]);
@@ -255,8 +275,41 @@ describe("the update flag", () => {
     expect(journal.runs.find((run) => run.argv[0] === "gh")?.argv[2]).toBe(`repos/someone/firstmate/compare/${HEAD}...${REMOTE}`);
   });
 
+  test("matches a local edit whose name git status would quote", async ($, on) => {
+    world(on, { snapshot: BUSY_SNAPSHOT, ...behind, compare: { n: 1, files: ["docs/my notes é.md"] }, edits: ["docs/my notes é.md"] });
+    await start($);
+    expect(shownText(await $.ui.render(pane()))).toContain("Your local change to docs/my notes é.md is in the way: the update changes it too.");
+  });
+
+  test("compares against origin's default branch when it is not main", async ($, on) => {
+    const { journal } = world(on, { snapshot: BUSY_SNAPSHOT, ...behind, defaultBranch: "trunk", branch: "trunk" });
+    await start($);
+    expect(shownText(await $.ui.render(pane()))).toContain("Firstmate update available - 3 commits behind");
+    expect(journal.runs.find((run) => run.argv[0] === "gh")?.argv[2]).toBe(`repos/kunchenguid/firstmate/compare/${HEAD}...${REMOTE}`);
+  });
+
+  for (const [label, branch] of [["another branch", "feature"], ["a detached HEAD", ""]] as const) {
+    test(`shows no flag when HEAD is on ${label}, which the update would skip`, async ($, on) => {
+      const { journal } = world(on, { snapshot: BUSY_SNAPSHOT, ...behind, branch });
+      await start($);
+      expect(shownText(await $.ui.render(pane()))).not.toContain("Firstmate update available");
+      expect(journal.runs.some((run) => run.argv[0] === "gh")).toBe(false);
+      expect(journal.statuses.at(-1)).toBe("⚓ 1 under way · 1 signal · 1 PR ready");
+    });
+  }
+
+  test("starts no second update check while one is running", async ($, on) => {
+    const { journal } = world(on, { snapshot: BUSY_SNAPSHOT, origin: ORIGIN, head: HEAD, remote: HEAD });
+    await start($);
+    const checks = () => journal.runs.filter((run) => run.argv[3] === "ls-remote").length;
+    const before = checks();
+    const ui = await $.ui.mount({ plugin: "spyglass", ...pane() });
+    await Promise.all([ui.press({ key: "check-update" }), ui.press({ key: "check-update" })]);
+    expect(checks()).toBe(before + 1);
+  });
+
   test("notes an untouched local edit without calling it a conflict", async ($, on) => {
-    world(on, { snapshot: BUSY_SNAPSHOT, ...behind, porcelain: " M README.md\n" });
+    world(on, { snapshot: BUSY_SNAPSHOT, ...behind, edits: ["README.md"] });
     await start($);
     const text = shownText(await $.ui.render(pane()));
     expect(text).toContain("Your local change to README.md is not touched by this update.");
@@ -374,7 +427,7 @@ describe("the read-only boundary", () => {
     const allowed = (argv: readonly string[]) =>
       argv[0] === SNAPSHOT ||
       argv[0] === PEEK ||
-      (argv[0] === "git" && argv[1] === "-C" && ["remote", "rev-parse", "ls-remote", "status"].includes(argv[3] ?? "")) ||
+      (argv[0] === "git" && argv[1] === "-C" && ["remote", "rev-parse", "ls-remote", "symbolic-ref", "diff"].includes(argv[3] ?? "")) ||
       (argv[0] === "gh" && argv[1] === "api") ||
       (argv[0] === "/bin/sh" && /^command -v (gh|tmux)$/.test(argv[argv.length - 1] ?? "")) ||
       argv[0] === "open" ||

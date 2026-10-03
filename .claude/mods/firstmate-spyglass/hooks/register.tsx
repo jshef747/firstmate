@@ -25,7 +25,7 @@ import {
   clockTime,
   githubRepoFromRemote,
   isSafeTarget,
-  localEdits,
+  originHead,
   parseWorkerMeta,
   sanitizeCapture,
   signalIds,
@@ -67,6 +67,8 @@ let activation: Promise<boolean> | undefined;
 let codeRoot = "";
 let home = "";
 let stateDirectory = "";
+// The environment the `bin/` scripts run with: the home, and the state directory when it is overridden.
+let scriptEnv: Record<string, string> = {};
 // The GitHub repo origin names: undefined until the first update check, null when the check cannot run here.
 let upstream: string | null | undefined;
 let timers: { cancel(): void }[] = [];
@@ -76,6 +78,8 @@ let busy = false;
 let ring: string | undefined;
 // The id of the first mate's turn running the captain's update, once that turn has started.
 let updateTurn: string | undefined;
+// The update check in flight, so a second one is not started beside it.
+let checkRun: Promise<void> | undefined;
 
 function isActivated($: EngineInterface): Promise<boolean> {
   if (activation === undefined) {
@@ -100,7 +104,7 @@ async function refresh($: EngineInterface) {
   try {
     const run = await $.process.run([`${codeRoot}/${SNAPSHOT}`, "--json"], {
       cwd: codeRoot,
-      env: { FM_HOME: home },
+      env: scriptEnv,
       timeoutMs: 20_000,
     });
     if (run.exitCode !== 0) throw new Error(run.stderr.trim().split("\n").pop() || `exit ${run.exitCode}`);
@@ -155,19 +159,34 @@ async function updateSource($: EngineInterface): Promise<string | null> {
   }
 }
 
-// Compares this Firstmate checkout with origin's main without fetching into it (ls-remote + GitHub compare),
-// and names locally edited tracked files the incoming commits also change, which would block a fast-forward.
-async function checkUpdate($: EngineInterface) {
+// One update check at a time: a second request while one runs shares it, so an older result never overwrites a newer one.
+function checkUpdate($: EngineInterface): Promise<void> {
+  return (checkRun ??= runUpdateCheck($).finally(() => {
+    checkRun = undefined;
+  }));
+}
+
+// Compares this Firstmate checkout with origin's default branch, the one the update fast-forwards, without fetching
+// into it (ls-remote + GitHub compare), and names locally edited tracked files the incoming commits also change,
+// which would block a fast-forward. A checkout on any other branch gets no flag: the update would skip it.
+async function runUpdateCheck($: EngineInterface) {
   if (!codeRoot) return;
   await update($, checking, () => true);
   const git = (...args: string[]) => $.process.run(["git", "-C", codeRoot, ...args], { timeoutMs: 30_000 });
   try {
     if (upstream === undefined) upstream = await updateSource($);
     if (upstream === null) return;
+    const origin = originHead((await git("ls-remote", "--symref", "origin", "HEAD")).stdout);
+    if (!origin) throw new Error("could not read origin's default branch");
+    const branch = (await git("symbolic-ref", "--quiet", "--short", "HEAD")).stdout.trim();
+    if (branch !== origin.branch) {
+      await update($, upd, () => null);
+      return;
+    }
     const head = (await git("rev-parse", "HEAD")).stdout.trim();
-    const remote = (await git("ls-remote", "origin", "refs/heads/main")).stdout.split("\t")[0]?.trim();
-    if (!head || !remote) throw new Error("could not read local or remote main");
-    const local = localEdits((await git("status", "--porcelain", "--untracked-files=no")).stdout);
+    const remote = origin.commit;
+    if (!head) throw new Error("could not read local HEAD");
+    const local = (await git("diff", "--name-only", "--no-renames", "-z", "HEAD")).stdout.split("\0").filter(Boolean);
     let compare: { n?: number; files?: string[] } | undefined;
     if (head !== remote) {
       const cmp = await $.process.run(
@@ -188,6 +207,9 @@ async function checkUpdate($: EngineInterface) {
     }));
   } finally {
     await update($, checking, () => false);
+    // The status line follows the new result now, not at the next fleet refresh.
+    const f = await read($, fleet);
+    if (f && (await read($, error)) === null) $.ui.status(summary(f, await read($, upd)));
   }
 }
 
@@ -204,6 +226,8 @@ async function requestUpdate($: EngineInterface) {
 
 // After the first mate's update turn: done when main caught up, else the Update button comes back for a retry.
 async function settleUpdate($: EngineInterface) {
+  // A check that started before the update landed reads the old HEAD: let it finish, then check afresh.
+  await checkRun;
   await checkUpdate($);
   if ((await read($, request)) !== "running") return;
   await update($, request, () => null);
@@ -218,7 +242,7 @@ async function refreshSession($: EngineInterface) {
   try {
     const run = await $.process.run([`${codeRoot}/${PEEK}`, cur.id, "80"], {
       cwd: codeRoot,
-      env: { FM_HOME: home },
+      env: scriptEnv,
       timeoutMs: 15_000,
     });
     const text = sanitizeCapture(run.stdout || run.stderr);
@@ -277,6 +301,7 @@ export const register: Register = (on) => {
     codeRoot = root;
     home = where;
     stateDirectory = spyglassStateDirectory(env, $.plugin.root);
+    scriptEnv = { FM_HOME: home, ...(env.FM_STATE_OVERRIDE ? { FM_STATE_OVERRIDE: env.FM_STATE_OVERRIDE } : {}) };
     await $.command.register({ name: "fleet", description: "Open the Spyglass fleet pane" });
     await refresh($);
     timers.push($.clock.every(15_000, () => void refresh($)));

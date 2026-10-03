@@ -94,7 +94,8 @@ export function trimSnapshot(snapshot: SnapshotJson): Fleet {
     calls: records
       .filter((record) => record.captain_actionable)
       .map((record) => ({ id: record.id, title: record.title ?? record.raw ?? record.id, reason: record.hold_reason ?? "" })),
-    prs: tasks.flatMap((task) => (task.pr?.url ? [{ id: task.id, url: task.pr.url }] : [])),
+    // A PR is ready only once its worker reports done; a URL alone can be an open draft.
+    prs: tasks.flatMap((task) => (task.pr?.url && task.current_state?.state === "done" ? [{ id: task.id, url: task.pr.url }] : [])),
     queued: records
       .filter((record) => record.state === "queued" && !record.captain_actionable)
       .map((record) => ({ id: record.id, title: record.title ?? record.raw ?? record.id })),
@@ -154,15 +155,14 @@ export function githubRepoFromRemote(remote: string): string | undefined {
   return match ? `${match[1]}/${match[2]}` : undefined;
 }
 
-/** The tracked files a `git status --porcelain --untracked-files=no` listing reports as locally edited. */
-export function localEdits(porcelain: string): string[] {
-  return porcelain
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => line.slice(3));
+/** Origin's default branch and its commit, from `git ls-remote --symref origin HEAD`, or undefined when either is missing. */
+export function originHead(lsRemote: string): { branch: string; commit: string } | undefined {
+  const branch = /^ref: refs\/heads\/(\S+)\tHEAD$/m.exec(lsRemote)?.[1];
+  const commit = /^([0-9a-f]+)\tHEAD$/m.exec(lsRemote)?.[1];
+  return branch && commit ? { branch, commit } : undefined;
 }
 
-/** The update state from one comparison of this checkout with origin's main, `compare` being the GitHub compare answer when the commits differ. */
+/** The update state from one comparison of this checkout with origin's default branch, `compare` being the GitHub compare answer when the commits differ. */
 export function updateFrom(
   remote: string,
   local: string[],

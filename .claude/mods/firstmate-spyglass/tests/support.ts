@@ -54,11 +54,14 @@ export type WorldOptions = {
   origin?: string;
   /** Whether `gh` is installed; defaults to true. */
   gh?: boolean;
-  /** The commit local HEAD and origin's main are at. */
+  /** The commit local HEAD and origin's default branch are at. */
   head?: string;
   remote?: string;
-  /** What `git status --porcelain` prints. */
-  porcelain?: string;
+  /** Origin's default branch and the branch HEAD is on; both default to main. */
+  defaultBranch?: string;
+  branch?: string;
+  /** The tracked files `git diff --name-only HEAD` reports as locally edited. */
+  edits?: string[];
   /** What the GitHub compare answers when the commits differ. */
   compare?: { n: number; files: string[] };
 };
@@ -87,8 +90,9 @@ export function world(on: On, options: WorldOptions = {}): World {
     { prefix: ["git", "-C", CODE, "remote", "get-url", "origin"], answer: () => (options.origin === undefined ? { exitCode: 1, stderr: "no origin" } : { stdout: `${options.origin}\n` }) },
     { prefix: ["/bin/sh", "-c", "command -v gh"], answer: () => (options.gh === false ? { exitCode: 1 } : { stdout: "/usr/bin/gh\n" }) },
     { prefix: ["git", "-C", CODE, "rev-parse", "HEAD"], answer: () => ({ stdout: `${head}\n` }) },
-    { prefix: ["git", "-C", CODE, "ls-remote"], answer: () => ({ stdout: `${remote}\trefs/heads/main\n` }) },
-    { prefix: ["git", "-C", CODE, "status"], answer: () => ({ stdout: options.porcelain ?? "" }) },
+    { prefix: ["git", "-C", CODE, "ls-remote"], answer: () => ({ stdout: `ref: refs/heads/${options.defaultBranch ?? "main"}\tHEAD\n${remote}\tHEAD\n` }) },
+    { prefix: ["git", "-C", CODE, "symbolic-ref"], answer: () => ({ stdout: `${options.branch ?? "main"}\n` }) },
+    { prefix: ["git", "-C", CODE, "diff"], answer: () => ({ stdout: (options.edits ?? []).map((file) => `${file}\0`).join("") }) },
     { prefix: ["gh", "api"], answer: () => ({ stdout: JSON.stringify(options.compare ?? { n: 0, files: [] }) }) },
   ];
   const world: World = {
@@ -210,7 +214,7 @@ export const BUSY_SNAPSHOT = {
     {
       id: "alpha",
       kind: "ship",
-      current_state: { state: "working" },
+      current_state: { state: "done" },
       backlog: { repo: "web" },
       pr: { url: "https://github.com/o/r/pull/7" },
       backend: "tmux",

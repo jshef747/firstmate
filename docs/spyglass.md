@@ -39,6 +39,7 @@ Every script runs with `FM_HOME` set to that home, so a second mate's home shows
 
 While the mod is on, the status line summarizes the fleet in one row, for example `⚓ 3 under way · 1 signal · 2 PRs ready · ⬆ update`.
 Each part appears only when it is nonzero: workers under way, decisions waiting on the captain, PRs ready, and a Firstmate update available.
+A PR counts as ready only once its worker reports done; a PR link from a worker still under way is not a signal.
 The row is cleared when there is nothing to say, and reads `⚓ fleet unreadable` when the snapshot fails.
 The fleet refreshes every 15 seconds and after every turn.
 
@@ -84,16 +85,18 @@ The first read of a session announces nothing.
 
 ### Firstmate update flag
 
-Spyglass compares this checkout with origin's `main` without fetching into it, once at session start, every 10 minutes, on `/fleet`, and after a turn while an update is running.
+Spyglass compares this checkout with origin's default branch, the branch the update fast-forwards, without fetching into it, once at session start, every 10 minutes, on `/fleet`, and after a turn while an update is running.
+Only one check runs at a time, and the status line follows its result as soon as it finishes.
+A checkout on any other branch, or on a detached HEAD, shows no flag, because the update would skip it.
 The flag appears only when origin is ahead, and then shows:
 
 - how many commits behind the checkout is;
 - a warning when a locally edited tracked file is also changed by the incoming commits, which would block a fast-forward, or a plain note naming local edits the update does not touch;
 - an Update Firstmate button, which shows queued, then updating, then done states.
-  If the first mate's update turn ends with main still behind, the button comes back so the captain can retry.
+  If the first mate's update turn ends with the checkout still behind, the button comes back so the captain can retry.
 
 While origin is not ahead the banner shows a small up-to-date line and a Check for updates control.
-The flag clears as soon as the local `main` reaches the commit it was behind.
+The flag clears as soon as the local checkout reaches the commit it was behind.
 
 The upstream repository comes from the checkout's `origin` remote when that remote is on GitHub, so a fork compares against itself.
 Spyglass skips the update flag and its control entirely when `origin` is not a GitHub remote, or when `gh` is not installed.
@@ -105,7 +108,7 @@ Spyglass skips the update flag and its control entirely when `origin` is not a G
 | Workers, ready PRs, captain holds, queued work | `bin/fm-fleet-snapshot.sh --json` |
 | A worker's model and effort | `model=` and `effort=` lines of `state/<id>.meta` |
 | A worker's live terminal tail | `bin/fm-peek.sh <id> 80` |
-| Commits behind and incoming files | `git ls-remote origin refs/heads/main`, `git rev-parse HEAD`, `git status --porcelain`, and the GitHub compare API through `gh api` |
+| Commits behind and incoming files | `git ls-remote --symref origin HEAD`, `git symbolic-ref HEAD`, `git rev-parse HEAD`, `git diff --name-only -z HEAD`, and the GitHub compare API through `gh api` |
 
 ## Read-only boundary
 

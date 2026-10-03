@@ -25,7 +25,7 @@ export type Fleet = {
   queued: Queued[];
 };
 
-/** This Firstmate checkout against origin's main: how far behind, and local edits an update would collide with. */
+/** This Firstmate checkout against origin's default branch: how far behind, and local edits an update would collide with. */
 export type Update = {
   remote: string;
   behind: number;
