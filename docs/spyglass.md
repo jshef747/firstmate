@@ -65,9 +65,9 @@ Its buttons:
 - Refresh captures the tail now.
 - Open in terminal opens the worker's tmux window in Ghostty when it is installed, else in Terminal.app on macOS.
 - Copy attach command copies `tmux attach -t <target>`.
+- Close closes the pane.
 
 Both attach buttons appear only for a local tmux worker; a worker on another backend or a remote secondmate shows Refresh and Close alone.
-- Close closes the pane.
 
 On the desktop app, a click on View session in an unfocused fleet pane only moves the keyboard there.
 Spyglass treats the keyboard landing on View session from outside the fleet pane (from the session pane, not from the chat box) as the press and opens that worker's session.
