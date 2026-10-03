@@ -514,6 +514,8 @@ export const register: Register = (on) => {
     if (!cur) return <Text color={NAVY.mist}>Pick a worker in Spyglass to watch its session.</Text>;
 
     const attach = cur.target ? `tmux attach -t ${cur.target}` : null;
+    // Only the newest lines that fit under the header and buttons, so the live end of the tail is on screen.
+    const tail = cur.text.split("\n").slice(-Math.max(8, (e.viewport?.rows ?? 40) - 14)).join("\n");
 
     return (
       <Box flexDirection="column">
@@ -543,7 +545,7 @@ export const register: Register = (on) => {
           />
         </Box>
         <Box marginTop={1} borderStyle="round" borderColor={NAVY.hull} paddingX={1}>
-          {cur.text ? <Code source={cur.text} language="text" /> : <Text color={NAVY.mist}>Waiting for the first capture...</Text>}
+          {cur.text ? <Code source={tail} language="text" /> : <Text color={NAVY.mist}>Waiting for the first capture...</Text>}
         </Box>
       </Box>
     );

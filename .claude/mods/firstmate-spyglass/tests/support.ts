@@ -164,12 +164,12 @@ export async function start($: Engine): Promise<void> {
 // The world the running test built last: each test builds exactly one.
 let current: World | undefined;
 
-export function pane(requestId = "spyglass", columns = 80) {
+export function pane(requestId = "spyglass", columns = 80, rows = 40) {
   return {
     surface: "terminal" as const,
     component: "Pane" as const,
     requestId,
-    viewport: { columns, rows: 40 },
+    viewport: { columns, rows },
     props: { title: "Spyglass", isFocused: false, bodyColumns: columns, placement: "inline", scroll: {}, view: {} } as never,
   };
 }

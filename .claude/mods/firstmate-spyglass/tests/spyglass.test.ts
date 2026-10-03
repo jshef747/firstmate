@@ -135,6 +135,22 @@ describe("the worker session pane", () => {
     expect(text).toContain("Copy attach command");
   });
 
+  test("shows only the newest tail lines that fit the viewport, with a floor", async ($, on) => {
+    const { journal, reply } = world(on, { snapshot: BUSY_SNAPSHOT });
+    reply([PEEK], { stdout: Array.from({ length: 80 }, (_, i) => `step ${i + 1}`).join("\n") });
+    await start($);
+    const ui = await $.ui.mount({ plugin: "spyglass", ...pane() });
+    await ui.press({ key: "view:alpha" });
+    expect(journal.runs.find((run) => run.argv[0] === PEEK)?.argv).toEqual([PEEK, "alpha", "80"]);
+    const tall = shownText(await $.ui.render(pane("spyglass-session", 80, 30)));
+    expect(tall).toContain("step 65\n");
+    expect(tall).toContain("step 80");
+    expect(tall).not.toContain("step 64\n");
+    const short = shownText(await $.ui.render(pane("spyglass-session", 80, 10)));
+    expect(short).toContain("step 73\n");
+    expect(short).not.toContain("step 72\n");
+  });
+
   test("copies the attach command for the worker's tmux target", async ($, on) => {
     const { journal } = world(on, { snapshot: BUSY_SNAPSHOT });
     await start($);
