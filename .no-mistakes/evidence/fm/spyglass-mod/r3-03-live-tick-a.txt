@@ -1,0 +1,45 @@
+                                                                                                              │ Spyglass   Session · ship-task                                                         ✕
+ ▐▛███▛█   Claude Code v2.1.288                                                                               │╔═══════════════════════════════════════════════════════════════════════════════════════╗
+▝▜██████▀  Opus 5.5 with high effort · Claude Pro                                                             │║ 🔭 ship-task                                                                          ║
+ ▝▝   ▝▝   ~/.no-mistakes/worktrees/a55a48b7a5fa/01M41A8PECEF3P12YHARZ8FZZF                                   │║ live · last output 20:19:29 · checked every 3s                                        ║
+                                                                                                              │╚═══════════════════════════════════════════════════════════════════════════════════════╝
+                                                                                                              │
+                                                                                                              │[ Refresh ] [ Open in terminal ] [ Copy attach command ] [ Close ]
+                                                                                                              │
+                                                                                                              │╭───────────────────────────────────────────────────────────────────────────────────────╮
+                                                                                                              ││ ship-task: static line 74                                                             │
+                                                                                                              ││ ship-task: static line 75                                                             │
+                                                                                                              ││ ship-task: static line 76                                                             │
+                                                                                                              ││ ship-task: static line 77                                                             │
+                                                                                                              ││ ship-task: static line 78                                                             │
+                                                                                                              ││ ship-task: static line 79                                                             │
+                                                                                                              ││ ship-task: static line 80                                                             │
+                                                                                                              ││ ship-task: static line 81                                                             │
+                                                                                                              ││ ship-task: static line 82                                                             │
+                                                                                                              ││ ship-task: static line 83                                                             │
+                                                                                                              ││ ship-task: static line 84                                                             │
+                                                                                                              ││ ship-task: static line 85                                                             │
+                                                                                                              ││ ship-task: static line 86                                                             │
+                                                                                                              ││ ship-task: static line 87                                                             │
+                                                                                                              ││ ship-task: static line 88                                                             │
+                                                                                                              ││ ship-task: static line 89                                                             │
+                                                                                                              ││ ship-task: static line 90                                                             │
+                                                                                                              ││ ship-task: static line 91                                                             │
+                                                                                                              ││ ship-task: tick 1                                                                     │
+                                                                                                              ││ ship-task: tick 2                                                                     │
+                                                                                                              ││ ship-task: tick 3                                                                     │
+                                                                                                              ││ ship-task: tick 4                                                                     │
+                                                                                                              ││ ship-task: tick 5                                                                     │
+                                                                                                              ││ ship-task: tick 6                                                                     │
+                                                                                                              ││ ship-task: tick 7                                                                     │
+                                                                                                              │╰───────────────────────────────────────────────────────────────────────────────────────╯
+                                                                                                              │
+                                                                                                              │
+                                                                                                              │
+                                                                                                              │
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ Try "how do I log an error?"
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⚠ spyglass: ⚓ 1 under way
+  Opus 5.5 · high | caveman full · ponytail full | ctx 0% | ~/.no-mistakes/worktrees/a55a48b7a5fa/01M41A8PECEF3P12YHARZ8FZZF
+  ⏵⏵ auto mode on (shift+tab to cycle) · ← for agents

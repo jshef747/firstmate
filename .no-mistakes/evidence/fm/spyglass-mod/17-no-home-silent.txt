@@ -1,0 +1,50 @@
+
+ ▐▛███▛█   Claude Code v2.1.288
+▝▜██████▀  Opus 5.5 with high effort · Claude Pro
+ ▝▝   ▝▝   ~/.no-mistakes/worktrees/a55a48b7a5fa/01M41A8PECEF3P12YHARZ8FZZF
+
+
+⏺ Unknown command: /fleet
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                      tmux focus-events off · add 'set -g focus-events on' to ~/.tmux.conf and reattach for focus tracking
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  Opus 5.5 · high | caveman full · ponytail full | ctx 0% | ~/.no-mistakes/worktrees/a55a48b7a5fa/01M41A8PECEF3P12YHARZ8FZZF
+  ⏵⏵ auto mode on (shift+tab to cycle) · ← for agents

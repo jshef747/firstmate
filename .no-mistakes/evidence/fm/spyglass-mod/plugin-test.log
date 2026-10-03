@@ -1,0 +1,3 @@
+ok - Claude Code 2.1.288 (Claude Code) validates the Spyglass mod strictly at its folder and its auto-load path, hooking exactly session start, /fleet, the focus ring, and its two panes, and writing neither files nor the environment
+ok - Claude Code 2.1.288 (Claude Code) runs the Spyglass mod's plugin test suites clean: exact opt-in, silence outside a Firstmate home, the fleet and its status line, both panes, the update flag, and the read-only boundary
+exit 0

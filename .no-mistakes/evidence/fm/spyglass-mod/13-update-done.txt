@@ -1,0 +1,70 @@
+  ●  watcher supervision needs Stop-owned automatic recovery; inspect the hook registration a╭───────────────────────────────────╮│╔═══════════════════════════════════════════════════════════════════════════════════════✕
+  ending the turn.                                                                           │ spyglass                          ││║ ⚓ S P Y G L A S S ⚓                                                                 ║
+  ●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                   │ ✓ Firstmate updated to the latest ││║ Dog Watch · fleet changed 19:57                                                       ║
+                                                                                             ╰───────────────────────────────────╯│║                                                                                       ║
+                                                                                                                                  │║ ✓ Firstmate updated to the latest [ Check for updates ]                               ║
+⏺ Captain, firstmate wasn't updated (the untracked .lab-fm-old/ folder blocks it), so use /updatefirstmate from your real session.│╚═══════════════════════════════════════════════════════════════════════════════════════╝
+  The guard loop is still waiting on your choice: 1 or 2.                                                                         │
+                                                                                                                                  │╭───────────────────────────────────────────────────────────────────────────────────────╮
+⏺ Ran 3 stop hooks                                                                                                                ││ 🚩 Signals for the Captain (3)                                                        │
+  ⎿  Stop hook error: [[ -z "${GROK_AGENT:-}${GROK_HOOK_EVENT:-}" ] || exit 0; exec                                               ││                                                                                       │
+  "$CLAUDE_PROJECT_DIR"/bin/fm-turnend-guard.sh --claude]:                                                                        ││ 1.  PR ready · ship-task                                                              │
+  ●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                                                        ││     https://github.com/kunchenguid/firstmate/pull/9                                   │
+  ●  TURN WOULD END BLIND - SUPERVISION IS OFF                                                                                    ││ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
+  ●  1 task(s) in flight, but no live watcher holds this home lock (last beat: never).                                            ││ 2.  Approve the new crew roster                                                       │
+  ●  The Stop-owned auto-arm did not claim this home either, so recovery is NOT already under way.                                ││     two candidates, pick one                                                          │
+  ●  watcher supervision needs Stop-owned automatic recovery; inspect the hook registration and startup status before             ││ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │
+  ending the turn.                                                                                                                ││ 3.  Pick the release route                                                            │
+  ●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                                                        ││     choose between a patch and a minor release                                        │
+                                                                                                                                  │╰───────────────────────────────────────────────────────────────────────────────────────╯
+                                                                                                                                  │
+⏺ Captain, firstmate wasn't updated because the untracked .lab-fm-old/ folder blocks it in this copy; use /updatefirstmate from   │╭───────────────────────────────────────────────────────────────────────────────────────╮
+  your real session. Choose 1 or 2 to stop the guard loop.                                                                        ││ ⛵ Under Way (1)                                                                      │
+                                                                                                                                  ││                                                                                       │
+⏺ Ran 3 stop hooks                                                                                                                ││ 1.  ship-task                                                                         │
+  ⎿  Stop hook error: [[ -z "${GROK_AGENT:-}${GROK_HOOK_EVENT:-}" ] || exit 0; exec                                               ││     ship · alpha · unknown                                                            │
+  "$CLAUDE_PROJECT_DIR"/bin/fm-turnend-guard.sh --claude]:                                                                        ││     🧭 opus · high effort                                                             │
+  ●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                                                        ││                                                                                       │
+  ●  TURN WOULD END BLIND - SUPERVISION IS OFF                                                                                    ││     [ View session ]                                                                  │
+  ●  1 task(s) in flight, but no live watcher holds this home lock (last beat: never).                                            │╰───────────────────────────────────────────────────────────────────────────────────────╯
+  ●  The Stop-owned auto-arm did not claim this home either, so recovery is NOT already under way.                                │
+  ●  watcher supervision needs Stop-owned automatic recovery; inspect the hook registration and startup status before             │╭───────────────────────────────────────────────────────────────────────────────────────╮
+  ending the turn.                                                                                                                ││ ⚓ At Anchor (1)                                                                      │
+  ●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                                                        ││                                                                                       │
+                                                                                                                                  ││ 1.  Chart the reef survey                                                             │
+                                                                                                                                  │╰───────────────────────────────────────────────────────────────────────────────────────╯
+⏺ Captain, firstmate wasn't updated (blocked by the untracked .lab-fm-old/ folder), so use /updatefirstmate from your real        │
+  session. I'm still waiting on 1 or 2 for the guard loop.                                                                        │
+                                                                                                                                  │
+⏺ Ran 3 stop hooks                                                                                                                │
+  ⎿  Stop hook error: [[ -z "${GROK_AGENT:-}${GROK_HOOK_EVENT:-}" ] || exit 0; exec                                               │
+  "$CLAUDE_PROJECT_DIR"/bin/fm-turnend-guard.sh --claude]:                                                                        │
+  ●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                                                        │
+  ●  TURN WOULD END BLIND - SUPERVISION IS OFF                                                                                    │
+  ●  1 task(s) in flight, but no live watcher holds this home lock (last beat: never).                                            │
+  ●  The Stop-owned auto-arm did not claim this home either, so recovery is NOT already under way.                                │
+  ●  watcher supervision needs Stop-owned automatic recovery; inspect the hook registration and startup status before             │
+  ending the turn.                                                                                                                │
+  ●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━                                                        │
+                                                                                                                                  │
+                                                                                                                                  │
+⏺ A hook blocked the turn from ending 9 consecutive times — overriding and ending turn. For Stop/SubagentStop hooks, check        │
+  stop_hook_active in the input and return success while it's true. Set CLAUDE_CODE_STOP_HOOK_BLOCK_CAP to raise this             │
+  limit.                                                                                                                          │
+                                                                                                                                  │
+✻ Cooked for 56s · done 8:02 PM                                                                                                   │
+                                                                                                                                  │
+› Prompt from the spyglass plugin                                                                                                 │
+❯ update firstmate                                                                                                                │
+                                                                                                                                  │
+  Running 1 shell command…                                                                                                        │
+                                                                                                                                  │
+✽ Beboppin'… (5s · ↓ 247 tokens · thought for 1s)                                                                                 │
+  ⎿  Tip: Continue your session in Claude Code Desktop with /desktop                                                              │
+                                                                                                                                  │
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⚠ spyglass: ⚓ 1 under way · 2 signals · 1 PR ready
+  Opus 5.5 · high | caveman full · ponytail full | ctx 9% | 5h 49% (4h36m) | wk 14% | ~/.no-mistakes/worktrees/a55a48b7a5fa/01M41A8PECEF3P12YHARZ8FZZF
+  ⏵⏵ auto mode on (shift+tab to cycle) · ← for agents

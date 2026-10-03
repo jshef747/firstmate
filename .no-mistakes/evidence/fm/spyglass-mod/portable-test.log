@@ -1,0 +1,6 @@
+ok - the Spyglass mod is one hooks module, linked into the project's auto-load path, with no command, skill, agent, or classic hook path that bypasses its exact opt-in
+ok - the mod resolves its code root, home, and state directory like the bin scripts: FM_HOME, FM_ROOT_OVERRIDE, FM_STATE_OVERRIDE, then the checkout
+ok - snapshot trimming keeps workers, holds, ready PRs, and queued work from synthetic and real snapshots, and the status line, signal ids, and watches follow
+ok - the update comparison derives the upstream from origin, counts commits behind, and flags only local edits the incoming commits also change
+ok - the capture sanitizer strips escapes and control characters and keeps the newest 10000 characters, and the terminal launcher refuses unsafe targets
+exit 0

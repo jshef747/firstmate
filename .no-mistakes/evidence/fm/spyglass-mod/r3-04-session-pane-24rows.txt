@@ -1,0 +1,24 @@
+                                                                                                              │ Spyglass   Session · ship-task                                                         ✕
+ ▐▛███▛█   Claude Code v2.1.288                                                                               │╔═══════════════════════════════════════════════════════════════════════════════════════╗
+▝▜██████▀  Opus 5.5 with high effort · Claude Pro                                                             │║ 🔭 ship-task                                                                          ║
+ ▝▝   ▝▝   ~/.no-mistakes/worktrees/a55a48b7a5fa/01M41A8PECEF3P12YHARZ8FZZF                                   │║ live · last output 20:19:44 · checked every 3s                                        ║
+                                                                                                              │╚═══════════════════════════════════════════════════════════════════════════════════════╝
+                                                                                                              │
+                                                                                                              │[ Refresh ] [ Open in terminal ] [ Copy attach command ] [ Close ]
+                                                                                                              │
+                                                                                                              │╭───────────────────────────────────────────────────────────────────────────────────────╮
+                                                                                                              ││ ship-task: static line 114                                                            │
+                                                                                                              ││ ship-task: static line 115                                                            │
+                                                                                                              ││ ship-task: static line 116                                                            │
+                                                                                                              ││ ship-task: static line 117                                                            │
+                                                                                                              ││ ship-task: static line 118                                                            │
+                                                                                                              ││ ship-task: static line 119                                                            │
+                                                                                                              ││ ship-task: static line 120                                                            │
+                                                                                                              ││ ship-task: NEWEST LINE                                                                │
+                                                                                                              │
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ Try "how do I log an error?"
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⚠ spyglass: ⚓ 1 under way
+  Opus 5.5 · high | caveman full · ponytail full | ctx 0% | ~/.no-mistakes/worktrees/a55a48b7a5fa/01M41A8PECEF3P12YHARZ8FZZF
+  ⏵⏵ auto mode on (shift+tab to cycle) · ← for agents
