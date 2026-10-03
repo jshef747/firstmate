@@ -144,6 +144,23 @@ describe("the worker session pane", () => {
     await side.press({ key: "copy" });
     expect(journal.copies).toEqual(["tmux attach -t fm:alpha"]);
   });
+
+  for (const [label, worker] of [
+    ["a worker on another backend", { backend: "herdr", endpoint: { target: "herdr-pane-7" } }],
+    ["a remote secondmate", { backend: "tmux", remote: { host: "box", root: "/fm" }, endpoint: { target: "fm:alpha" } }],
+  ] as const) {
+    test(`offers no tmux attach for ${label}`, async ($, on) => {
+      const { journal } = world(on, { snapshot: { ...BUSY_SNAPSHOT, tasks: [{ ...BUSY_SNAPSHOT.tasks[0], ...worker }] } });
+      await start($);
+      const ui = await $.ui.mount({ plugin: "spyglass", ...pane() });
+      await ui.press({ key: "view:alpha" });
+      const text = shownText(await $.ui.render(pane("spyglass-session")));
+      expect(text).toContain("Refresh");
+      expect(text).not.toContain("Open in terminal");
+      expect(text).not.toContain("Copy attach command");
+      expect(journal.copies).toEqual([]);
+    });
+  }
 });
 
 describe("the focus workaround", () => {
@@ -251,6 +268,24 @@ describe("the update flag", () => {
     const text = shownText(await $.ui.render(pane()));
     expect(text).toContain("✓ Firstmate updated to the latest");
     expect(text).not.toContain("Firstmate update available");
+  });
+
+  test("brings the Update button back when the first mate's turn ends with main still behind", async ($, on) => {
+    const { clock, journal } = world(on, { snapshot: BUSY_SNAPSHOT, ...behind });
+    await start($);
+    const ui = await $.ui.mount({ plugin: "spyglass", ...pane() });
+    await ui.press({ key: "update" });
+    // A subagent's turn ending mid-update leaves the update running.
+    await $.turn.complete({ answer: "", durationMs: 1, isAborted: false, turnId: "sub", agentId: "helper", reason: "answer" });
+    await clock.settle();
+    expect(shownText(await $.ui.render(pane()))).toContain("Updating Firstmate...");
+    await $.turn.complete({ answer: "", durationMs: 1, isAborted: false, turnId: "main", reason: "answer" });
+    await clock.settle();
+    const text = shownText(await $.ui.render(pane()));
+    expect(text).toContain("Firstmate update available - 3 commits behind");
+    expect(text).not.toContain("Updating Firstmate...");
+    expect(text).toContain("Update Firstmate");
+    expect(journal.toasts).toContain("⬆ Firstmate update did not land - see the first mate's reply");
   });
 
   test("skips the flag and the control when origin is not a GitHub remote", async ($, on) => {

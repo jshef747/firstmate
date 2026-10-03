@@ -115,9 +115,11 @@ check(lib.summary(empty, null) === undefined, "an empty fleet produced a status 
 const snapshot = {
   generated: "2026-10-03T10:15:00Z",
   tasks: [
-    { id: "alpha", kind: "ship", current_state: { state: "working" }, backlog: { repo: "web" }, project: "ignored", pr: { url: "https://github.com/o/r/pull/7" }, endpoint: { target: "fm:alpha" } },
+    { id: "alpha", kind: "ship", current_state: { state: "working" }, backlog: { repo: "web" }, project: "ignored", pr: { url: "https://github.com/o/r/pull/7" }, backend: "tmux", remote: null, endpoint: { target: "fm:alpha" } },
     { id: "beta", current_state: {}, project: "api" },
     { id: "gamma" },
+    { id: "delta", backend: "herdr", remote: null, endpoint: { target: "herdr-pane-7" } },
+    { id: "epsilon", backend: "tmux", remote: { host: "box", root: "/fm" }, endpoint: { target: "fm:epsilon" } },
   ],
   backlog: {
     records: [
@@ -134,7 +136,9 @@ same(fleet.underWay, [
   { id: "alpha", kind: "ship", state: "working", project: "web", pr: "https://github.com/o/r/pull/7", target: "fm:alpha", model: null, effort: null },
   { id: "beta", kind: "-", state: "?", project: "api", pr: null, target: null, model: null, effort: null },
   { id: "gamma", kind: "-", state: "?", project: "-", pr: null, target: null, model: null, effort: null },
-], "workers were trimmed differently");
+  { id: "delta", kind: "-", state: "?", project: "-", pr: null, target: null, model: null, effort: null },
+  { id: "epsilon", kind: "-", state: "?", project: "-", pr: null, target: null, model: null, effort: null },
+], "workers were trimmed differently (only a local tmux worker keeps its attach target)");
 same(fleet.calls, [
   { id: "held", title: "Pick a name", reason: "needs the captain" },
   { id: "rawheld", title: "- raw line", reason: "" },
@@ -150,8 +154,8 @@ same(lib.parseWorkerMeta("model=\nharness=pi\n"), { model: null, effort: null },
 
 // The status line.
 const behind = { remote: "r", behind: 2, local: [], conflicts: [], checkedAt: "10:00", error: null };
-check(lib.summary(fleet, null) === "⚓ 3 under way · 2 signals · 1 PR ready", \`summary was \${lib.summary(fleet, null)}\`);
-check(lib.summary(fleet, behind) === "⚓ 3 under way · 2 signals · 1 PR ready · ⬆ update", "the update flag is missing from the summary");
+check(lib.summary(fleet, null) === "⚓ 5 under way · 2 signals · 1 PR ready", \`summary was \${lib.summary(fleet, null)}\`);
+check(lib.summary(fleet, behind) === "⚓ 5 under way · 2 signals · 1 PR ready · ⬆ update", "the update flag is missing from the summary");
 check(lib.summary({ ...empty, underWay: [fleet.underWay[0]] }, null) === "⚓ 1 under way", "a single worker pluralized");
 check(lib.summary(empty, behind) === "⚓ ⬆ update", "an update alone did not read");
 check(lib.summary(empty, { ...behind, behind: 0 }) === undefined, "an up-to-date checkout added to the summary");

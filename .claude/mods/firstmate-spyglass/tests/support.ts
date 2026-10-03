@@ -102,6 +102,7 @@ export function world(on: On, options: WorldOptions = {}): World {
 
   on("session.start", async (_$, e) => ({ cwd: e.cwd }));
   on("ui.focus", async () => ({}));
+  on("turn.complete", async () => ({ text: "" }));
   on("ui.close", async () => ({ value: undefined }));
   on("fs.exists", async (_$, e) => ({ value: files.has(e.path) }));
   on("fs.read", async (_$, e) => {
@@ -211,6 +212,8 @@ export const BUSY_SNAPSHOT = {
       current_state: { state: "working" },
       backlog: { repo: "web" },
       pr: { url: "https://github.com/o/r/pull/7" },
+      backend: "tmux",
+      remote: null,
       endpoint: { target: "fm:alpha" },
     },
   ],

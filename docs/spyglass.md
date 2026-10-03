@@ -65,6 +65,8 @@ Its buttons:
 - Refresh captures the tail now.
 - Open in terminal opens the worker's tmux window in Ghostty when it is installed, else in Terminal.app on macOS.
 - Copy attach command copies `tmux attach -t <target>`.
+
+Both attach buttons appear only for a local tmux worker; a worker on another backend or a remote secondmate shows Refresh and Close alone.
 - Close closes the pane.
 
 On the desktop app, a click on View session in an unfocused fleet pane only moves the keyboard there.
@@ -87,6 +89,7 @@ The flag appears only when origin is ahead, and then shows:
 - how many commits behind the checkout is;
 - a warning when a locally edited tracked file is also changed by the incoming commits, which would block a fast-forward, or a plain note naming local edits the update does not touch;
 - an Update Firstmate button, which shows queued, then updating, then done states.
+  If the first mate's turn ends with main still behind, the button comes back so the captain can retry.
 
 While origin is not ahead the banner shows a small up-to-date line and a Check for updates control.
 The flag clears as soon as the local `main` reaches the commit it was behind.

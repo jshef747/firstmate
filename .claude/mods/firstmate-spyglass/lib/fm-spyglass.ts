@@ -28,6 +28,8 @@ type SnapshotJson = {
     current_state?: { state?: string };
     backlog?: { repo?: string };
     pr?: { url?: string };
+    backend?: string;
+    remote?: unknown;
     endpoint?: { target?: string };
   }[];
   backlog?: {
@@ -69,7 +71,10 @@ export function spyglassStateDirectory(env: SpyglassHomeEnvironment, pluginRoot:
   return env.FM_STATE_OVERRIDE || `${spyglassHome(env, pluginRoot)}/state`;
 }
 
-/** Reduce an `fm-fleet-snapshot.v1` object to what the captain looks at. */
+/**
+ * Reduce an `fm-fleet-snapshot.v1` object to what the captain looks at. A worker keeps its
+ * target only when it is a local tmux one, the only kind `tmux attach` can reach.
+ */
 export function trimSnapshot(snapshot: SnapshotJson): Fleet {
   const tasks = snapshot.tasks ?? [];
   const records = snapshot.backlog?.records ?? [];
@@ -82,7 +87,7 @@ export function trimSnapshot(snapshot: SnapshotJson): Fleet {
       state: task.current_state?.state ?? "?",
       project: task.backlog?.repo ?? task.project ?? "-",
       pr: task.pr?.url ?? null,
-      target: task.endpoint?.target ?? null,
+      target: (task.backend === "tmux" && !task.remote && task.endpoint?.target) || null,
       model: null,
       effort: null,
     })),

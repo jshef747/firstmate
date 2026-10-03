@@ -202,6 +202,14 @@ async function requestUpdate($: EngineInterface) {
   await update($, request, () => "running");
 }
 
+// After the first mate's update turn: done when main caught up, else the Update button comes back for a retry.
+async function settleUpdate($: EngineInterface) {
+  await checkUpdate($);
+  if ((await read($, request)) !== "running") return;
+  await update($, request, () => null);
+  $.ui.toast("⬆ Firstmate update did not land - see the first mate's reply");
+}
+
 // Live tail of one worker's session through fm-peek (read-only capture).
 async function refreshSession($: EngineInterface) {
   const cur = await read($, session);
@@ -304,7 +312,7 @@ export const register: Register = (on) => {
     if (!(await isLive($))) return next(e);
     const done = await next(e);
     void refresh($);
-    if ((await read($, request)) === "running") void checkUpdate($);
+    if (!e.agentId && (await read($, request)) === "running") void settleUpdate($);
 
     return done;
   });
