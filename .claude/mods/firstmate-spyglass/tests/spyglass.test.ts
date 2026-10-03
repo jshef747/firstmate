@@ -254,6 +254,8 @@ describe("the update flag", () => {
     await ui.press({ key: "update" });
     expect(journal.prompts).toEqual([{ text: "update firstmate", asUser: true }]);
     expect(journal.toasts).toContain("⬆ Update queued - the first mate runs it as soon as it is free");
+    expect(shownText(await $.ui.render(pane()))).toContain("Update queued - starts as soon as the first mate is free");
+    await $.turn.start({ text: "update firstmate", turnId: "update" });
     expect(shownText(await $.ui.render(pane()))).toContain("Updating Firstmate...");
   });
 
@@ -275,17 +277,32 @@ describe("the update flag", () => {
     await start($);
     const ui = await $.ui.mount({ plugin: "spyglass", ...pane() });
     await ui.press({ key: "update" });
+    await $.turn.start({ text: "update firstmate", turnId: "update" });
     // A subagent's turn ending mid-update leaves the update running.
     await $.turn.complete({ answer: "", durationMs: 1, isAborted: false, turnId: "sub", agentId: "helper", reason: "answer" });
     await clock.settle();
     expect(shownText(await $.ui.render(pane()))).toContain("Updating Firstmate...");
-    await $.turn.complete({ answer: "", durationMs: 1, isAborted: false, turnId: "main", reason: "answer" });
+    await $.turn.complete({ answer: "", durationMs: 1, isAborted: false, turnId: "update", reason: "answer" });
     await clock.settle();
     const text = shownText(await $.ui.render(pane()));
     expect(text).toContain("Firstmate update available - 3 commits behind");
     expect(text).not.toContain("Updating Firstmate...");
     expect(text).toContain("Update Firstmate");
     expect(journal.toasts).toContain("⬆ Firstmate update did not land - see the first mate's reply");
+  });
+
+  test("keeps the update queued while the first mate finishes the turn it was busy on", async ($, on) => {
+    const { clock, journal } = world(on, { snapshot: BUSY_SNAPSHOT, ...behind });
+    await start($);
+    const ui = await $.ui.mount({ plugin: "spyglass", ...pane() });
+    await ui.press({ key: "update" });
+    await $.turn.complete({ answer: "", durationMs: 1, isAborted: false, turnId: "busy", reason: "answer" });
+    await clock.settle();
+    const text = shownText(await $.ui.render(pane()));
+    expect(text).toContain("Update queued - starts as soon as the first mate is free");
+    expect(text).not.toContain("Update Firstmate");
+    expect(journal.toasts).not.toContain("⬆ Firstmate update did not land - see the first mate's reply");
+    expect(journal.prompts).toHaveLength(1);
   });
 
   test("skips the flag and the control when origin is not a GitHub remote", async ($, on) => {

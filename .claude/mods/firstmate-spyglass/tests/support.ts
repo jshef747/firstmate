@@ -143,6 +143,7 @@ export function world(on: On, options: WorldOptions = {}): World {
     journal.prompts.push({ text: e.text, asUser: e.origin.kind === "plugin" && e.origin.asUser === true });
     return { text: e.text };
   });
+  on("turn.start", async (_$, e) => ({ turnId: e.turnId }));
   on("ui.render", async (_$, e) => ({ type: "Text", props: {}, children: [STOCK_TEXT] }) as never);
 
   current = world;

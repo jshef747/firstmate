@@ -74,6 +74,8 @@ let seen: Set<string> | null = null;
 let busy = false;
 // The element the fleet pane's focus ring last sat on, or undefined while it sits outside that pane.
 let ring: string | undefined;
+// The id of the first mate's turn running the captain's update, once that turn has started.
+let updateTurn: string | undefined;
 
 function isActivated($: EngineInterface): Promise<boolean> {
   if (activation === undefined) {
@@ -197,9 +199,7 @@ async function requestUpdate($: EngineInterface) {
   if (sent.drop) {
     await update($, request, () => null);
     $.ui.toast(`Update not sent: ${sent.drop}`);
-    return;
   }
-  await update($, request, () => "running");
 }
 
 // After the first mate's update turn: done when main caught up, else the Update button comes back for a retry.
@@ -262,6 +262,7 @@ export const register: Register = (on) => {
     seen = null;
     ring = undefined;
     upstream = undefined;
+    updateTurn = undefined;
 
     const env = {
       FM_HOME: await $.env.get("FM_HOME"),
@@ -308,11 +309,24 @@ export const register: Register = (on) => {
     return done;
   });
 
+  // The queued update starts running when the first mate's turn on the captain's words begins.
+  on("turn.start", async ($, e, next) => {
+    if (!(await isLive($))) return next(e);
+    if (e.text === "update firstmate" && (await read($, request)) === "queued") {
+      updateTurn = e.turnId;
+      await update($, request, () => "running");
+    }
+    return next(e);
+  });
+
   on("turn.complete", async ($, e, next) => {
     if (!(await isLive($))) return next(e);
     const done = await next(e);
     void refresh($);
-    if (!e.agentId && (await read($, request)) === "running") void settleUpdate($);
+    if (!e.agentId && updateTurn !== undefined && e.turnId === updateTurn) {
+      updateTurn = undefined;
+      void settleUpdate($);
+    }
 
     return done;
   });
