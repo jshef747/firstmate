@@ -44,6 +44,7 @@ test_validate_strict() {
     # The scan is the engine's own reading of the module: the events it will hook
     # and the environment names it may read. Anything more or less is a drift.
     expect_in_report "$report" "session.start" "the scan of $path does not hook session start"
+    expect_in_report "$report" "ui.focus" "the scan of $path does not hook the focus ring"
     expect_in_report "$report" "command.run{command=fleet}" "the scan of $path does not serve /fleet"
     expect_in_report "$report" "ui.render{component=Pane, requestId=spyglass}" "the scan of $path does not draw the fleet pane"
     expect_in_report "$report" "ui.render{component=Pane, requestId=spyglass-session}" "the scan of $path does not draw the session pane"
@@ -56,7 +57,7 @@ test_validate_strict() {
         ;;
     esac
   done
-  pass "Claude Code $CLAUDE_VERSION validates the Spyglass mod strictly at its folder and its auto-load path, hooking exactly session start, /fleet, and its two panes, and writing neither files nor the environment"
+  pass "Claude Code $CLAUDE_VERSION validates the Spyglass mod strictly at its folder and its auto-load path, hooking exactly session start, /fleet, the focus ring, and its two panes, and writing neither files nor the environment"
 }
 
 test_plugin_suites() {

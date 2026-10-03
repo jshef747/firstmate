@@ -67,6 +67,10 @@ Its buttons:
 - Copy attach command copies `tmux attach -t <target>`.
 - Close closes the pane.
 
+On the desktop app, a click on View session in an unfocused fleet pane only moves the keyboard there.
+Spyglass treats the keyboard landing on View session from outside the fleet pane (from the session pane, not from the chat box) as the press and opens that worker's session.
+A click that arrives from the chat box cannot be attributed, so it still needs a second click.
+
 Open in terminal refuses a worker target that is not a plain tmux target, so a hostile name cannot reach the launcher.
 The capture is cleaned before display: terminal escape sequences and control characters are dropped, and the newest 10000 characters stay.
 

@@ -101,6 +101,7 @@ export function world(on: On, options: WorldOptions = {}): World {
   };
 
   on("session.start", async (_$, e) => ({ cwd: e.cwd }));
+  on("ui.focus", async () => ({}));
   on("ui.close", async () => ({ value: undefined }));
   on("fs.exists", async (_$, e) => ({ value: files.has(e.path) }));
   on("fs.read", async (_$, e) => {
@@ -220,3 +221,14 @@ export const BUSY_SNAPSHOT = {
     ],
   },
 };
+
+/** A focus-ring move onto an element of the fleet pane, as the engine raises it. */
+export function focus(element: string | undefined, origin: "person" | "plugin" = "person", requestId = "spyglass") {
+  return {
+    component: "Pane" as const,
+    requestId,
+    plugin: element === undefined ? undefined : "spyglass",
+    element,
+    origin: origin === "person" ? { kind: "person" as const } : { kind: "plugin" as const, name: "spyglass" },
+  };
+}

@@ -5,6 +5,7 @@ import { describe, expect, test, type Engine } from "claude-code/testing";
 import {
   BUSY_SNAPSHOT,
   CODE,
+  focus,
   HEAD,
   HOME,
   isStock,
@@ -25,6 +26,7 @@ describe("activation", () => {
     await start($);
     expect(isStock(await $.ui.render(pane()))).toBe(true);
     expect(isStock(await $.ui.render(pane("spyglass-session")))).toBe(true);
+    await $.ui.focus(focus("view:alpha"));
     await clock.advance(11 * 60_000);
     expect(journal.runs).toHaveLength(0);
     expect(journal.commands).toHaveLength(0);
@@ -141,6 +143,48 @@ describe("the worker session pane", () => {
     const side = await $.ui.mount({ plugin: "spyglass", ...pane("spyglass-session") });
     await side.press({ key: "copy" });
     expect(journal.copies).toEqual(["tmux attach -t fm:alpha"]);
+  });
+});
+
+describe("the focus workaround", () => {
+  const peeks = (runs: { argv: readonly string[] }[]) => runs.filter((run) => run.argv[0] === PEEK);
+
+  test("opens a session when the ring lands on View session from outside the fleet pane", async ($, on) => {
+    const { clock, journal } = world(on, { snapshot: BUSY_SNAPSHOT });
+    await start($);
+    await $.ui.focus(focus("view:alpha"));
+    await clock.settle();
+    expect(journal.opened).toContain("spyglass-session");
+    expect(peeks(journal.runs)).toHaveLength(1);
+    expect(peeks(journal.runs)[0]?.argv).toEqual([PEEK, "alpha", "80"]);
+  });
+
+  test("treats a move already inside the fleet pane as an ordinary focus change", async ($, on) => {
+    const { clock, journal } = world(on, { snapshot: BUSY_SNAPSHOT });
+    await start($);
+    await $.ui.focus(focus("check-update"));
+    await clock.settle();
+    await $.ui.focus(focus("view:alpha"));
+    await clock.settle();
+    expect(journal.opened).not.toContain("spyglass-session");
+    // Leaving the pane forgets the ring, so the next arrival counts as coming from outside.
+    await $.ui.focus(focus("refresh", "person", "spyglass-session"));
+    await clock.settle();
+    await $.ui.focus(focus("view:alpha"));
+    await clock.settle();
+    expect(journal.opened).toContain("spyglass-session");
+  });
+
+  test("ignores a plugin-driven move and a worker that is gone", async ($, on) => {
+    const { clock, journal } = world(on, { snapshot: BUSY_SNAPSHOT });
+    await start($);
+    await $.ui.focus(focus("view:alpha", "plugin"));
+    await clock.settle();
+    await $.ui.focus(focus(undefined));
+    await clock.settle();
+    await $.ui.focus(focus("view:missing"));
+    await clock.settle();
+    expect(journal.opened).not.toContain("spyglass-session");
   });
 });
 

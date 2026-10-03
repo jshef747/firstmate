@@ -72,6 +72,8 @@ let upstream: string | null | undefined;
 let timers: { cancel(): void }[] = [];
 let seen: Set<string> | null = null;
 let busy = false;
+// The element the fleet pane's focus ring last sat on, or undefined while it sits outside that pane.
+let ring: string | undefined;
 
 function isActivated($: EngineInterface): Promise<boolean> {
   if (activation === undefined) {
@@ -250,6 +252,7 @@ export const register: Register = (on) => {
     timers = [];
     codeRoot = "";
     seen = null;
+    ring = undefined;
     upstream = undefined;
 
     const env = {
@@ -274,6 +277,27 @@ export const register: Register = (on) => {
     void $.ui.open({ id: PANE, title: TITLE });
 
     return next(e);
+  });
+
+  // Desktop: a click on a Button in an unfocused pane only takes the keyboard. Coming from the session pane,
+  // the ring lands on the clicked button (no press), so treat that as the press. Coming from the chat box the
+  // ring lands on nothing and the click cannot be attributed; that case still needs a second click.
+  on("ui.focus", async ($, e, next) => {
+    if (!(await isLive($))) return next(e);
+    const done = await next(e);
+    if (e.requestId !== PANE) {
+      ring = undefined;
+      return done;
+    }
+    const was = ring;
+    ring = e.element;
+    if (!was && e.origin.kind === "person" && e.element?.startsWith("view:")) {
+      const id = e.element.slice("view:".length);
+      const t = (await read($, fleet))?.underWay.find((w) => w.id === id);
+      if (t) void openSession($, t.id, t.target);
+    }
+
+    return done;
   });
 
   on("turn.complete", async ($, e, next) => {
@@ -390,7 +414,7 @@ export const register: Register = (on) => {
         <Box height={1} />
         {rows.length === 0 && <Text color={NAVY.mist}>{empty}</Text>}
         {rows.map((row, n) => (
-          <Box flexDirection="column">
+          <Box key={`${label}:${n}`} flexDirection="column">
             {n > 0 && line("┄")}
             <Box alignItems="flex-start">
               <Box width={4} flexShrink={0}>
@@ -432,7 +456,7 @@ export const register: Register = (on) => {
           "Under Way",
           "Calm seas - no crew under way.",
           f.underWay.map((t) => (
-            <Box flexDirection="column">
+            <Box key={`uw:${t.id}`} flexDirection="column">
               <Text bold color={NAVY.foam}>{t.id}</Text>
               <Text color={NAVY.mist}>
                 {t.kind} · {t.project} · <Text color={NAVY.sea}>{t.state}</Text>
