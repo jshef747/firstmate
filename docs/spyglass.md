@@ -113,6 +113,7 @@ The scripts it runs are `bin/fm-fleet-snapshot.sh` and `bin/fm-peek.sh`, plus re
 The one action that reaches the first mate is the Update Firstmate button.
 It submits the captain's own words, `update firstmate`, as the user, so the first mate runs its normal update when it is next free.
 That prompt waits for the first mate to be idle, which can take minutes, so the button reports queued at once.
+The button stays pressable while queued, so a queued prompt that was lost, for example pulled back by an interrupt, can be sent again.
 
 ## Claude Code support bounds
 

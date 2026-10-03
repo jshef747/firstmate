@@ -300,9 +300,24 @@ describe("the update flag", () => {
     await clock.settle();
     const text = shownText(await $.ui.render(pane()));
     expect(text).toContain("Update queued - starts as soon as the first mate is free");
-    expect(text).not.toContain("Update Firstmate");
     expect(journal.toasts).not.toContain("⬆ Firstmate update did not land - see the first mate's reply");
     expect(journal.prompts).toHaveLength(1);
+  });
+
+  test("keeps Update Firstmate pressable while queued, so a lost queued prompt can be sent again", async ($, on) => {
+    const { journal } = world(on, { snapshot: BUSY_SNAPSHOT, ...behind });
+    await start($);
+    const ui = await $.ui.mount({ plugin: "spyglass", ...pane() });
+    await ui.press({ key: "update" });
+    await ui.press({ key: "update" });
+    expect(journal.prompts).toEqual([
+      { text: "update firstmate", asUser: true },
+      { text: "update firstmate", asUser: true },
+    ]);
+    await $.turn.start({ text: "update firstmate", turnId: "update" });
+    const text = shownText(await $.ui.render(pane()));
+    expect(text).toContain("Updating Firstmate...");
+    expect(text).not.toContain("Update queued");
   });
 
   test("skips the flag and the control when origin is not a GitHub remote", async ($, on) => {

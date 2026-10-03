@@ -407,12 +407,13 @@ export const register: Register = (on) => {
         )}
         <Text color={NAVY.mist}>checked {u.checkedAt}</Text>
         <Box marginTop={1}>
-          {req === "queued" ? (
-            <Text color={NAVY.sea}>⏳ Update queued - starts as soon as the first mate is free</Text>
-          ) : req === "running" ? (
+          {req === "running" ? (
             <Text color={NAVY.sea}>🔄 Updating Firstmate...</Text>
           ) : (
-            <Button key="update" label="Update Firstmate" onPress={() => requestUpdate($)} />
+            <Box gap={1} alignItems="center">
+              {req === "queued" && <Text color={NAVY.sea}>⏳ Update queued - starts as soon as the first mate is free</Text>}
+              <Button key="update" label="Update Firstmate" onPress={() => requestUpdate($)} />
+            </Box>
           )}
         </Box>
       </Box>
